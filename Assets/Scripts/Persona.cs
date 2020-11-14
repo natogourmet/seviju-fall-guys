@@ -8,6 +8,8 @@ public class Persona : MonoBehaviour
     public float velocidadGiro;
     public float magnitudSalto;
     public bool estaSaltando;
+    public Animator animator;
+    public float velocidadActual;
 
     void Start()
     {
@@ -19,7 +21,6 @@ public class Persona : MonoBehaviour
         Caminar();
         Saltar();
         Hablar();
-        
     }
 
     void Saltar()
@@ -27,6 +28,7 @@ public class Persona : MonoBehaviour
         if (!estaSaltando && Input.GetKeyDown(KeyCode.Space))
         {
             estaSaltando = true;
+            animator.SetBool("EstaCayendo", estaSaltando);
             transform.GetComponent<Rigidbody>().AddForce(Vector3.up * magnitudSalto, ForceMode.Force);
         }
     }
@@ -35,7 +37,8 @@ public class Persona : MonoBehaviour
     {
         if (!estaSaltando)
         {
-            transform.Translate(new Vector3(0, 0, 1) * velocidad * Time.deltaTime * Input.GetAxis("Vertical"));
+            velocidadActual = velocidad * Time.deltaTime * Input.GetAxis("Vertical");
+            transform.Translate(new Vector3(0, 0, 1) * velocidadActual);
         }
         else
         {
@@ -44,7 +47,16 @@ public class Persona : MonoBehaviour
                 transform.Translate(new Vector3(0, 0, 1) * (velocidad / 2) * Time.deltaTime);
             }
         }
-        
+
+        if (velocidadActual > 0.01)
+        {
+            animator.SetBool("EstaCaminando", true);
+        }
+        else
+        {
+            animator.SetBool("EstaCaminando", false);
+        }
+
         transform.Rotate(new Vector3(0, 1, 0) * velocidadGiro * Time.deltaTime * Input.GetAxis("Horizontal"));
     }
 
@@ -58,14 +70,22 @@ public class Persona : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.transform.tag == "suelo")
+        if (collision.transform.tag == "suelo" || collision.transform.tag == "plataforma")
         {
             estaSaltando = false;
+            animator.SetBool("EstaCayendo", estaSaltando);
         }
         else if (collision.transform.tag == "Respawn") {
             transform.position = Vector3.zero;
         }
     }
 
-    
+    private void OnCollisionExit(Collision collision)
+    {
+        if (collision.transform.tag == "suelo" || collision.transform.tag == "plataforma")
+        {
+            estaSaltando = true;
+            animator.SetBool("EstaCayendo", estaSaltando);
+        }
+    }
 }
